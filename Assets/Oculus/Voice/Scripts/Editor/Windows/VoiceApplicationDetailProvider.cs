@@ -18,9 +18,11 @@
  * limitations under the License.
  */
 
+using UnityEngine;
 using UnityEditor;
 using System.Reflection;
-using Meta.WitAi.Windows;
+using Facebook.WitAi.Data.Configuration;
+using Facebook.WitAi.Windows;
 using Oculus.Voice.Inspectors;
 
 namespace Oculus.Voice.Windows
@@ -35,10 +37,9 @@ namespace Oculus.Voice.Windows
             {
                 switch (subfield.Name)
                 {
-                    case "name":
-                    case "lang":
-                        return true;
-                    default:
+                    case "id":
+                    case "createdAt":
+                    case "isPrivate":
                         return false;
                 }
             }

@@ -42,8 +42,6 @@ namespace Oculus.Interaction.PoseDetection
         [SerializeField]
         private bool _disableRollFromSource = false;
 
-        protected bool _started;
-
         protected virtual void Awake()
         {
             Hmd = _hmd as IHmd;
@@ -51,30 +49,12 @@ namespace Oculus.Interaction.PoseDetection
 
         protected virtual void Start()
         {
-            this.BeginStart(ref _started);
-            this.AssertField(Hmd, nameof(Hmd));
-            this.EndStart(ref _started);
+            Assert.IsNotNull(Hmd);
         }
 
-        protected virtual void OnEnable()
+        protected virtual void Update()
         {
-            if (_started)
-            {
-                Hmd.WhenUpdated += HandleHmdUpdated;
-            }
-        }
-
-        protected virtual void OnDisable()
-        {
-            if (_started)
-            {
-                Hmd.WhenUpdated -= HandleHmdUpdated;
-            }
-        }
-
-        protected virtual void HandleHmdUpdated()
-        {
-            if (!Hmd.TryGetRootPose(out Pose centerEyePose))
+            if (!Hmd.GetRootPose(out Pose centerEyePose))
             {
                 return;
             }

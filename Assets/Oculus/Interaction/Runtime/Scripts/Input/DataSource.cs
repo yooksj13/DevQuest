@@ -20,6 +20,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction.Input
 {
@@ -57,8 +58,7 @@ namespace Oculus.Interaction.Input
         private UpdateModeFlags _updateMode;
         public UpdateModeFlags UpdateMode => _updateMode;
 
-        [SerializeField, Interface(typeof(IDataSource))]
-        [Optional(OptionalAttribute.Flag.DontHide)]
+        [SerializeField, Interface(typeof(IDataSource)), Optional]
         private MonoBehaviour _updateAfter;
 
         private IDataSource UpdateAfter;
@@ -80,7 +80,7 @@ namespace Oculus.Interaction.Input
             if (_updateAfter != null)
             {
                 UpdateAfter = _updateAfter as IDataSource;
-                this.AssertField(UpdateAfter, nameof(UpdateAfter));
+                Assert.IsNotNull(UpdateAfter);
             }
             Started = true;
             this.EndStart(ref _started);

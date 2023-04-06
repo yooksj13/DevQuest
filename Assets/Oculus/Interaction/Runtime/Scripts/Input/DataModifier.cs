@@ -19,6 +19,7 @@
  */
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction.Input
 {
@@ -88,7 +89,7 @@ namespace Oculus.Interaction.Input
         protected override void Start()
         {
             base.Start();
-            this.AssertField(ModifyDataFromSource, nameof(ModifyDataFromSource));
+            Assert.IsNotNull(ModifyDataFromSource);
         }
 
         #region Inject

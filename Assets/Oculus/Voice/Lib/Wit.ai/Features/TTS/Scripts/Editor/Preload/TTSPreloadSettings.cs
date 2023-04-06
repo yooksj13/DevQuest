@@ -7,9 +7,14 @@
  */
 
 using System;
+using System.Collections;
+using System.IO;
+using System.Collections.Generic;
+using Facebook.WitAi.Utilities;
+using UnityEditor;
 using UnityEngine;
 
-namespace Meta.WitAi.TTS.Editor.Preload
+namespace Facebook.WitAi.TTS.Editor.Preload
 {
     [Serializable]
     public class TTSPreloadPhraseData

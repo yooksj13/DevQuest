@@ -84,7 +84,7 @@ namespace Oculus.Interaction
 
         protected virtual void Start()
         {
-            this.AssertField(Controller, nameof(Controller));
+            Assert.IsNotNull(Controller);
         }
 
         protected virtual void Update()

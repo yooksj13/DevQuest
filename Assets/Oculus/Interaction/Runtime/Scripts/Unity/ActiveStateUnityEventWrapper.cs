@@ -19,22 +19,20 @@
  */
 
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Oculus.Interaction
 {
     public class ActiveStateUnityEventWrapper : MonoBehaviour
     {
-        [Tooltip("Events will fire based on the state of this IActiveState.")]
         [SerializeField, Interface(typeof(IActiveState))]
         private MonoBehaviour _activeState;
         private IActiveState ActiveState;
 
-        [Tooltip("This event will be fired when the provided IActiveState becomes active.")]
         [SerializeField]
         private UnityEvent _whenActivated;
-
-        [Tooltip("This event will be fired when the provided IActiveState becomes inactive.")]
         [SerializeField]
         private UnityEvent _whenDeactivated;
 
@@ -56,7 +54,7 @@ namespace Oculus.Interaction
 
         protected virtual void Start()
         {
-            this.AssertField(ActiveState, nameof(ActiveState));
+            Assert.IsNotNull(ActiveState);
             _savedState = false;
         }
 

@@ -19,6 +19,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -55,7 +56,7 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(PrimaryInteractable, nameof(PrimaryInteractable));
+            Assert.IsNotNull(PrimaryInteractable);
             this.EndStart(ref _started);
         }
 

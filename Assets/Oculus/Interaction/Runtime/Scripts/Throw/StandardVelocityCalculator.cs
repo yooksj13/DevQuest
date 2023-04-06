@@ -235,7 +235,7 @@ namespace Oculus.Interaction.Throw
 
         protected virtual void Start()
         {
-            this.AssertField(_bufferingParams, nameof(_bufferingParams));
+            Assert.IsNotNull(_bufferingParams);
             _bufferingParams.Validate();
 
             _bufferSize = Mathf.CeilToInt(_bufferingParams.BufferLengthSeconds
@@ -244,7 +244,7 @@ namespace Oculus.Interaction.Throw
 
             _linearVelocityFilter = OneEuroFilter.CreateVector3();
 
-            this.AssertField(ThrowInputDevice, nameof(ThrowInputDevice));
+            Assert.IsNotNull(ThrowInputDevice);
         }
 
         public ReleaseVelocityInformation CalculateThrowVelocity(Transform objectThrown)

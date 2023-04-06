@@ -294,19 +294,18 @@ namespace Oculus.Interaction.HandGrab.Recorder
         private void AddHandGrabPose(RecorderStep recorderStep,
             out HandGrabInteractable interactable, out HandGrabPose handGrabPose)
         {
-            interactable = HandGrabUtils.CreateHandGrabInteractable(recorderStep.Item.transform);
+            interactable = HandGrabInteractable.Create(recorderStep.Item.transform);
             if (recorderStep.Item.TryGetComponent(out Grabbable grabbable))
             {
-                interactable.InjectPointableElement(grabbable);
+                interactable.InjectOptionalPointableElement(grabbable);
             }
-
-            var pointData = new HandGrabUtils.HandGrabPoseData()
+            HandGrabPoseData pointData = new HandGrabPoseData()
             {
                 handPose = recorderStep.RawHandPose,
                 scale = 1f,
                 gripPose = recorderStep.GrabPoint,
             };
-            handGrabPose = HandGrabUtils.LoadHandGrabPose(interactable, pointData);
+            handGrabPose = interactable.LoadHandGrabPose(pointData);
         }
 
         private void AttachGhost(HandGrabPose point)

@@ -8,45 +8,33 @@
 
 using System;
 using System.Reflection;
-using System.Text;
-using Meta.WitAi.Data;
-using Meta.WitAi.Json;
+using Facebook.WitAi.Lib;
 using Meta.Conduit;
 
-namespace Meta.WitAi
+namespace Facebook.WitAi
 {
-    [Obsolete ("Use ParameterProvider.SetSpecializedParameter() instead of this class")]
     internal class WitConduitParameterProvider : ParameterProvider
     {
+        public const string WitResponseNodeReservedName = "@WitResponseNode";
         protected override object GetSpecializedParameter(ParameterInfo formalParameter)
         {
-            if (formalParameter.ParameterType == typeof(WitResponseNode) && ActualParameters.ContainsKey(WitResponseNodeReservedName.ToLower()))
+            if (formalParameter.ParameterType != typeof(WitResponseNode))
             {
-                return ActualParameters[WitResponseNodeReservedName.ToLower()];
+                throw new ArgumentException(nameof(formalParameter));
             }
-            if (formalParameter.ParameterType == typeof(VoiceSession) && ActualParameters.ContainsKey(VoiceSessionReservedName.ToLower()))
+            
+            var parameterValue = this.ActualParameters[WitResponseNodeReservedName];
+            if (parameterValue == null)
             {
-                return ActualParameters[VoiceSessionReservedName.ToLower()];
+                throw new NotSupportedException("Missing node parameter");
             }
 
-            // Log warning when not found
-            StringBuilder error = new StringBuilder();
-            error.AppendLine("Specialized parameter not found");
-            error.AppendLine($"Parameter Type: {formalParameter.ParameterType}");
-            error.AppendLine($"Parameter Name: {formalParameter.Name}");
-            error.AppendLine($"Actual Parameters: {ActualParameters.Keys.Count}");
-            foreach (var key in ActualParameters.Keys)
-            {
-                string val = ActualParameters[key] == null ? "NULL" : ActualParameters[key].GetType().ToString();
-                error.AppendLine($"\t{key}: {val}");
-            }
-            VLog.W(error.ToString());
-            return null;
+            return parameterValue;
         }
 
         protected override bool SupportedSpecializedParameter(ParameterInfo formalParameter)
         {
-            return formalParameter.ParameterType == typeof(WitResponseNode) || formalParameter.ParameterType == typeof(VoiceSession);
+            return formalParameter.ParameterType == typeof(WitResponseNode);
         }
     }
 }

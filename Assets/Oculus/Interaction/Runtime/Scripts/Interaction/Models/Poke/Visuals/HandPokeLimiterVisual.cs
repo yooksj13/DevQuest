@@ -19,7 +19,9 @@
  */
 
 using UnityEngine;
+using UnityEngine.Assertions;
 using Oculus.Interaction.Input;
+using UnityEngine.Serialization;
 
 namespace Oculus.Interaction
 {
@@ -52,9 +54,9 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(Hand, nameof(Hand));
-            this.AssertField(_pokeInteractor, nameof(_pokeInteractor));
-            this.AssertField(_syntheticHand, nameof(_syntheticHand));
+            Assert.IsNotNull(Hand);
+            Assert.IsNotNull(_pokeInteractor);
+            Assert.IsNotNull(_syntheticHand);
             this.EndStart(ref _started);
         }
 
@@ -62,8 +64,8 @@ namespace Oculus.Interaction
         {
             if (_started)
             {
-                _pokeInteractor.WhenStateChanged += HandleStateChanged;
-                _pokeInteractor.WhenPassedSurfaceChanged += HandlePassedSurfaceChanged;
+                _pokeInteractor.WhenInteractableSelected.Action += HandleLock;
+                _pokeInteractor.WhenInteractableUnselected.Action += HandleUnlock;
             }
         }
 
@@ -73,33 +75,11 @@ namespace Oculus.Interaction
             {
                 if (_isTouching)
                 {
-                    UnlockWrist();
+                    HandleUnlock(_pokeInteractor.SelectedInteractable);
                 }
 
-                _pokeInteractor.WhenStateChanged -= HandleStateChanged;
-                _pokeInteractor.WhenPassedSurfaceChanged -= HandlePassedSurfaceChanged;
-            }
-        }
-
-        private void HandlePassedSurfaceChanged(bool passed)
-        {
-            CheckPassedSurface();
-        }
-
-        private void HandleStateChanged(InteractorStateChangeArgs args)
-        {
-            CheckPassedSurface();
-        }
-
-        private void CheckPassedSurface()
-        {
-            if (_pokeInteractor.IsPassedSurface)
-            {
-                LockWrist();
-            }
-            else
-            {
-                UnlockWrist();
+                _pokeInteractor.WhenInteractableSelected.Action -= HandleLock;
+                _pokeInteractor.WhenInteractableUnselected.Action -= HandleUnlock;
             }
         }
 
@@ -108,12 +88,12 @@ namespace Oculus.Interaction
             UpdateWrist();
         }
 
-        private void LockWrist()
+        private void HandleLock(PokeInteractable pokeInteractable)
         {
             _isTouching = true;
         }
 
-        private void UnlockWrist()
+        private void HandleUnlock(PokeInteractable pokeInteractable)
         {
             _syntheticHand.FreeWrist();
             _isTouching = false;
@@ -129,9 +109,7 @@ namespace Oculus.Interaction
             }
 
             Vector3 positionDelta = rootPose.position - _pokeInteractor.Origin;
-            Vector3 targetPosePosition = _pokeInteractor.TouchPoint + positionDelta +
-                                         _pokeInteractor.Radius *
-                                         _pokeInteractor.TouchNormal;
+            Vector3 targetPosePosition = _pokeInteractor.TouchPoint + positionDelta;
             Pose wristPoseOverride = new Pose(targetPosePosition, rootPose.rotation);
 
             _syntheticHand.LockWristPose(wristPoseOverride, 1.0f, SyntheticHand.WristLockMode.Full, true, true);

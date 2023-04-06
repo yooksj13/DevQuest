@@ -19,15 +19,13 @@
  */
 
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction
 {
     public class GrabInteractable : PointerInteractable<GrabInteractor, GrabInteractable>,
-                                      IRigidbodyRef, ICollidersRef
+                                      IRigidbodyRef
     {
-        [SerializeField, Interface(typeof(IPointableElement))]
-        private MonoBehaviour _pointableElement;
-
         private Collider[] _colliders;
         public Collider[] Colliders => _colliders;
 
@@ -97,17 +95,15 @@ namespace Oculus.Interaction
                 _grabRegistry = new CollisionInteractionRegistry<GrabInteractor, GrabInteractable>();
                 SetRegistry(_grabRegistry);
             }
-            PointableElement = _pointableElement as IPointableElement;
         }
 
         protected override void Start()
         {
             this.BeginStart(ref _started, () => base.Start());
-            this.AssertField(Rigidbody, nameof(Rigidbody));
+            Assert.IsNotNull(Rigidbody);
             _colliders = Rigidbody.GetComponentsInChildren<Collider>();
-            this.AssertCollectionField(_colliders, nameof(_colliders),
-               $"The associated {AssertUtils.Nicify(nameof(Rigidbody))} must have at least one Collider.");
-            this.AssertField(PointableElement, nameof(PointableElement));
+            Assert.IsTrue(Colliders.Length > 0,
+            "The associated Rigidbody must have at least one Collider.");
             this.EndStart(ref _started);
         }
 
@@ -139,21 +135,14 @@ namespace Oculus.Interaction
 
         #region Inject
 
-        public void InjectAllGrabInteractable(Rigidbody rigidbody, IPointableElement pointableElement)
+        public void InjectAllGrabInteractable(Rigidbody rigidbody)
         {
             InjectRigidbody(rigidbody);
-            InjectPointableElement(pointableElement);
         }
 
         public void InjectRigidbody(Rigidbody rigidbody)
         {
             _rigidbody = rigidbody;
-        }
-
-        public void InjectPointableElement(IPointableElement pointableElement)
-        {
-            PointableElement = pointableElement;
-            _pointableElement = pointableElement as MonoBehaviour;
         }
 
         public void InjectOptionalGrabSource(Transform grabSource)
@@ -170,6 +159,7 @@ namespace Oculus.Interaction
         {
             _physicsGrabbable = physicsGrabbable;
         }
+
         #endregion
     }
 }

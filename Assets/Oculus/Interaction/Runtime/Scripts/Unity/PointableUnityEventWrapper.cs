@@ -73,7 +73,7 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(Pointable, nameof(Pointable));
+            Assert.IsNotNull(Pointable);
             _pointers = new HashSet<int>();
             this.EndStart(ref _started);
         }

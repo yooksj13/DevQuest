@@ -28,9 +28,10 @@ namespace Meta.Conduit
         /// </summary>
         private readonly IParameterProvider parameterProvider;
 
-        public ConduitDispatcherFactory(IInstanceResolver instanceResolver)
+        public ConduitDispatcherFactory(IInstanceResolver instanceResolver, IParameterProvider parameterProvider)
         {
             this.instanceResolver = instanceResolver;
+            this.parameterProvider = parameterProvider;
         }
         
         /// <summary>
@@ -40,7 +41,8 @@ namespace Meta.Conduit
         public IConduitDispatcher GetDispatcher()
         {
             return instance = instance ??
-                              new ConduitDispatcher(new ManifestLoader(), this.instanceResolver);
+                              new ConduitDispatcher(new ManifestLoader(), this.instanceResolver,
+                                  this.parameterProvider);
         }
     }
 }

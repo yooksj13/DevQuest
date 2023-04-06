@@ -11,8 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Meta.WitAi;
-using Meta.WitAi.Data.Info;
+using UnityEngine;
 
 namespace Meta.Conduit.Editor
 {
@@ -22,18 +21,18 @@ namespace Meta.Conduit.Editor
     internal class AssemblyMiner : IAssemblyMiner
     {
         /// <summary>
-        /// Validates that parameters are compatible.
+        /// Validates that parameters are compatible. 
         /// </summary>
         private readonly IParameterValidator _parameterValidator;
-        
+
         /// <summary>
         /// Set to true once the miner is initialized. No interactions with the class should be allowed before then.
         /// </summary>
         private bool _initialized = false;
-
+        
         /// <inheritdoc/>
         public Dictionary<string, int> SignatureFrequency { get; private set; } = new Dictionary<string, int>();
-
+        
         /// <inheritdoc/>
         public Dictionary<string, int> IncompatibleSignatureFrequency { get; private set; } = new Dictionary<string, int>();
 
@@ -41,7 +40,6 @@ namespace Meta.Conduit.Editor
         /// Initializes the class with a target assembly.
         /// </summary>
         /// <param name="parameterValidator">The parameter validator.</param>
-        /// <param name="parameterFilter">The parameter filter.</param>
         public AssemblyMiner(IParameterValidator parameterValidator)
         {
             this._parameterValidator = parameterValidator;
@@ -62,11 +60,14 @@ namespace Meta.Conduit.Editor
             {
                 throw new InvalidOperationException("Assembly Miner not initialized");
             }
-
+            
             var entities = new List<ManifestEntity>();
+
             var enums = assembly.GetEnumTypes();
             foreach (var enumType in enums)
             {
+                var enumUnderlyingType = Enum.GetUnderlyingType(enumType);
+                Debug.Log(enumType.Name);
                 Array enumValues;
                 try
                 {
@@ -75,45 +76,29 @@ namespace Meta.Conduit.Editor
                         // This is not a tagged entity.
                         // TODO: In these cases we should only include the enum if it's referenced by any of the actions.
                     }
-
+                    
                     enumValues = enumType.GetEnumValues();
                 }
                 catch (Exception e)
                 {
-                    VLog.W($"Failed to get enumeration values.\nEnum: {enumType}\n{e}");
+                    Debug.Log($"Failed to get enumeration values. {e}");
                     continue;
                 }
-
+                
                 var entity = new ManifestEntity
                 {
-                    ID = enumType.Name,
+                    ID = $"{enumType.Name}",
                     Type = "Enum",
-                    Namespace = enumType.Namespace,
-                    Name = enumType.Name,
-                    Assembly = assembly.FullName
+                    Name = $"{enumType.Name}"
                 };
 
-                var values = new List<WitKeyword>();
-
+                var values = new List<string>();
+                
                 foreach (var enumValue in enumValues)
                 {
-                    var synonyms = new List<string>();
-                    var attribute = GetAttribute<ConduitValueAttribute>(enumValue);
-                    if (attribute != null)
-                    {
-                        foreach (var alias in attribute.Aliases)
-                        {
-                            synonyms.Add(alias);
-                        }
-                    }
-
-                    if (enumValue == null)
-                    {
-                        VLog.E("Unexpected null enum value");
-                        continue;
-                    }
-                    
-                    values.Add(new WitKeyword(enumValue.ToString(), synonyms));
+                    object underlyingValue = Convert.ChangeType(enumValue, enumUnderlyingType);
+                    Debug.Log($"{enumValue} = {underlyingValue}");
+                    values.Add(enumValue.ToString() ?? string.Empty);
                 }
 
                 entity.Values = values;
@@ -123,23 +108,6 @@ namespace Meta.Conduit.Editor
             return entities;
         }
         
-        private static T GetAttribute<T>(object enumValue) where T:Attribute
-        {
-            var type = enumValue.GetType();
-            var memberInfos = type.GetMember(enumValue.ToString());
-            if (memberInfos.Length == 0)
-            {
-                return null;
-            }
-            var attributes = memberInfos.First().GetCustomAttributes(typeof(ConduitValueAttribute), false);
-            if (attributes.Length == 0)
-            {
-                return null;
-            }
-
-            return attributes.First() as T;
-        }
-
         /// <inheritdoc/>
         public List<ManifestAction> ExtractActions(IConduitAssembly assembly)
         {
@@ -147,7 +115,7 @@ namespace Meta.Conduit.Editor
             {
                 throw new InvalidOperationException("Assembly Miner not initialized");
             }
-
+            
             var methods = assembly.GetMethods();
 
             var actions = new List<ManifestAction>();
@@ -159,7 +127,7 @@ namespace Meta.Conduit.Editor
                 {
                     continue;
                 }
-
+                
                 var actionAttribute = attributes.First() as ConduitActionAttribute;
                 var actionName = actionAttribute.Intent;
                 if (string.IsNullOrEmpty(actionName))
@@ -179,23 +147,22 @@ namespace Meta.Conduit.Editor
                 var compatibleParameters = true;
 
                 var signature = GetMethodSignature(method);
-
+                
                 // We track this first regardless of whether or not Conduit supports it to identify gaps.
-                SignatureFrequency.TryGetValue(signature, out var currentFrequency);
+                SignatureFrequency.TryGetValue(signature, out var currentFrequency); 
                 SignatureFrequency[signature] = currentFrequency + 1;
 
                 foreach (var parameter in method.GetParameters())
                 {
                     var supported = _parameterValidator.IsSupportedParameterType(parameter.ParameterType);
+
                     if (!supported)
                     {
                         compatibleParameters = false;
-                        VLog.W($"Conduit does not currently support parameter type: {parameter.ParameterType}");
                         continue;
                     }
                     
                     List<string> aliases;
-                    List<string> examples;
 
                     if (parameter.GetCustomAttributes(typeof(ConduitParameterAttribute), false).Length > 0)
                     {
@@ -203,25 +170,22 @@ namespace Meta.Conduit.Editor
                             parameter.GetCustomAttributes(typeof(ConduitParameterAttribute), false).First() as
                                 ConduitParameterAttribute;
                         aliases = parameterAttribute.Aliases;
-                        examples = parameterAttribute.Examples;
                     }
                     else
                     {
                         aliases = new List<string>();
-                        examples = new List<string>();
                     }
 
                     var snakeCaseName= ConduitUtilities.DelimitWithUnderscores(parameter.Name).ToLower().TrimStart('_');
                     var snakeCaseAction = action.ID.Replace('.', '_');
-
+                    
                     var manifestParameter = new ManifestParameter
                     {
-                        Name = ConduitUtilities.SanitizeName(parameter.Name),
+                        Name = parameter.Name,
                         InternalName = parameter.Name,
                         QualifiedTypeName = parameter.ParameterType.FullName,
                         TypeAssembly = parameter.ParameterType.Assembly.FullName,
                         Aliases = aliases,
-                        Examples = examples,
                         QualifiedName = $"{snakeCaseAction}_{snakeCaseName}"
                     };
 
@@ -235,8 +199,8 @@ namespace Meta.Conduit.Editor
                 }
                 else
                 {
-                    VLog.W($"{method} has Conduit-Incompatible Parameters");
-                    IncompatibleSignatureFrequency.TryGetValue(signature, out currentFrequency);
+                    Debug.Log($"{method} has Conduit-incompatible parameters");
+                    IncompatibleSignatureFrequency.TryGetValue(signature, out currentFrequency); 
                     IncompatibleSignatureFrequency[signature] = currentFrequency + 1;
                 }
             }
@@ -248,7 +212,7 @@ namespace Meta.Conduit.Editor
         /// Generate a method signature summary that ignores method and parameter names but keeps types.
         /// For example:
         /// string F(int a, int b, float c) => string!int:2,float:1
-        /// static string F(int a, int b, float c) => #string!int:2,float:1
+        /// static string F(int a, int b, float c) => #string!int:2,float:1  
         /// </summary>
         /// <param name="methodInfo">The method we are capturing.</param>
         /// <returns>A string representing the relevant data types.</returns>
@@ -259,13 +223,13 @@ namespace Meta.Conduit.Editor
             {
                 sb.Append('#');
             }
-
+            
             sb.Append(methodInfo.ReturnType);
             sb.Append('!');
             var parameters = new SortedDictionary<string, int>();
             foreach (var parameter in methodInfo.GetParameters())
             {
-                parameters.TryGetValue(parameter.ParameterType.Name, out var currentFrequency);
+                parameters.TryGetValue(parameter.ParameterType.Name, out var currentFrequency); 
                 parameters[parameter.ParameterType.Name] = currentFrequency + 1;
             }
 
@@ -280,7 +244,7 @@ namespace Meta.Conduit.Editor
                 {
                     sb.Append(',');
                 }
-
+                
                 sb.Append(parameter.Key);
                 sb.Append(':');
                 sb.Append(parameter.Value);

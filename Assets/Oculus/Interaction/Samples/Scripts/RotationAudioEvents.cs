@@ -159,9 +159,9 @@ namespace Oculus.Interaction.Samples
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(InteractableView, nameof(InteractableView));
-            this.AssertField(TrackedTransform, nameof(TrackedTransform));
-            this.AssertField(_relativeTo, nameof(_relativeTo));
+            Assert.IsNotNull(InteractableView);
+            Assert.IsNotNull(TrackedTransform);
+            Assert.IsNotNull(_relativeTo);
             this.EndStart(ref _started);
         }
 

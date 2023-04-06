@@ -7,12 +7,13 @@
  */
 
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using Meta.WitAi.TTS.Utilities;
-using Meta.WitAi.TTS.Data;
+using Facebook.WitAi.TTS.Utilities;
+using Facebook.WitAi.TTS.Data;
 
-namespace Meta.WitAi.TTS.Editor
+namespace Facebook.WitAi.TTS.Editor
 {
     [CustomEditor(typeof(TTSSpeaker), true)]
     public class TTSSpeakerInspector : UnityEditor.Editor
@@ -37,7 +38,7 @@ namespace Meta.WitAi.TTS.Editor
                 _speaker = target as TTSSpeaker;
             }
             // Get voices
-            if (_voices == null || (_voiceIndex >= 0 && _voiceIndex < _voices.Length && !string.Equals(_speaker.presetVoiceID, _voices[_voiceIndex])))
+            if (_voices == null || (_voiceIndex >= 0 && _voiceIndex < _voices.Length && !string.Equals(_speaker.VoiceSettings.settingsID, _voices[_voiceIndex])))
             {
                 RefreshVoices();
             }

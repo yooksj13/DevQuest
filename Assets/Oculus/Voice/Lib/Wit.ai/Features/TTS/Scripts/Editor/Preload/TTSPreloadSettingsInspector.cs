@@ -8,14 +8,15 @@
 
 using System;
 using System.Collections.Generic;
-using Meta.WitAi.Data.Configuration;
-using Meta.WitAi.TTS.Data;
-using Meta.WitAi.TTS.Editor.Preload;
-using Meta.WitAi.Utilities;
+using System.Linq;
+using Facebook.WitAi.Configuration;
+using Facebook.WitAi.Data.Configuration;
+using Facebook.WitAi.TTS.Data;
+using Facebook.WitAi.TTS.Editor.Preload;
 using UnityEditor;
 using UnityEngine;
 
-namespace Meta.WitAi.TTS.Editor
+namespace Facebook.WitAi.TTS.Editor
 {
     [CustomEditor(typeof(TTSPreloadSettings), true)]
     public class TTSPreloadSettingsInspector : UnityEditor.Editor
@@ -30,7 +31,7 @@ namespace Meta.WitAi.TTS.Editor
         // Layout items
         public const float ACTION_BTN_INDENT = 15f;
         public virtual Texture2D HeaderIcon => WitTexts.HeaderIcon;
-        public virtual string HeaderUrl => WitTexts.GetAppURL(string.Empty, WitTexts.WitAppEndpointType.Settings);
+        public virtual string HeaderUrl => WitTexts.GetAppURL(WitConfigurationUtility.GetAppID(null), WitTexts.WitAppEndpointType.Settings);
 
         // Layout
         public override void OnInspectorGUI()
@@ -74,16 +75,13 @@ namespace Meta.WitAi.TTS.Editor
             TtsService = EditorGUILayout.ObjectField("TTS Service", TtsService, typeof(TTSService), true) as TTSService;
             if (TtsService == null)
             {
-                TtsService = GameObjectSearchUtility.FindSceneObject<TTSService>(true);
-                if (TtsService == null)
-                {
-                    EditorUtility.ClearProgressBar();
-                    WitEditorUI.LayoutErrorLabel("You must add a TTS Service to the loaded scene in order perform TTS actions.");
-                    EditorGUI.indentLevel--;
-                    return;
-                }
+                EditorUtility.ClearProgressBar();
+                TtsService = GameObject.FindObjectOfType<TTSService>();
+                WitEditorUI.LayoutErrorLabel("You must add a TTS Service to the loaded scene in order perform TTS actions.");
+                EditorGUI.indentLevel--;
+                return;
             }
-            if (_ttsVoiceIDs == null)
+            if (TtsService != null && _ttsVoiceIDs == null)
             {
                 _ttsVoiceIDs = GetVoiceIDs(TtsService);
             }

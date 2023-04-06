@@ -37,6 +37,8 @@ namespace Oculus.Interaction
         [SerializeField]
         private Quaternion _rotation = Quaternion.identity;
 
+        private Pose _cachedPose = Pose.identity;
+
         protected bool _started = false;
 
         protected virtual void Awake()
@@ -47,7 +49,7 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(Controller, nameof(Controller));
+            Assert.IsNotNull(Controller);
             this.EndStart(ref _started);
         }
 
@@ -55,7 +57,7 @@ namespace Oculus.Interaction
         {
             if (_started)
             {
-                Controller.WhenUpdated += HandleUpdated;
+                Controller.ControllerUpdated += HandleControllerUpdated;
             }
         }
 
@@ -63,23 +65,23 @@ namespace Oculus.Interaction
         {
             if (_started)
             {
-                Controller.WhenUpdated -= HandleUpdated;
+                Controller.ControllerUpdated -= HandleControllerUpdated;
             }
         }
 
-        private void HandleUpdated()
+        private void HandleControllerUpdated()
         {
             if (Controller.TryGetPose(out Pose rootPose))
             {
-                Pose pose = new Pose(Controller.Scale * _offset, _rotation);
-                pose.Postmultiply(rootPose);
-                transform.SetPose(pose);
+                GetOffset(ref _cachedPose);
+                _cachedPose.Postmultiply(rootPose);
+                transform.SetPose(_cachedPose);
             }
         }
 
         public void GetOffset(ref Pose pose)
         {
-            pose.position = Controller.Scale * _offset;
+            pose.position = _offset;
             pose.rotation = _rotation;
         }
 

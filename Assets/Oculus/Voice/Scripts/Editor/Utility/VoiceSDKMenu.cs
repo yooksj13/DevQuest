@@ -20,12 +20,13 @@
 
 using UnityEngine;
 using UnityEditor;
-using Meta.WitAi.Windows;
-using Meta.WitAi.Configuration;
-using Meta.WitAi.Data.Entities;
-using Meta.WitAi.TTS.Editor;
-using Meta.WitAi.TTS.Editor.Preload;
-using Meta.WitAi.Data.Info;
+using Facebook.WitAi.Windows;
+using Facebook.WitAi.Configuration;
+using Facebook.WitAi.Data.Configuration;
+using Facebook.WitAi.Data.Intents;
+using Facebook.WitAi.Data.Entities;
+using Facebook.WitAi.Data.Traits;
+using Facebook.WitAi.TTS.Editor.Preload;
 using Oculus.Voice.Windows;
 
 namespace Oculus.Voice.Utility
@@ -56,22 +57,22 @@ namespace Oculus.Voice.Utility
         {
 
         }
-        [CustomPropertyDrawer(typeof(WitAppInfo))]
+        [CustomPropertyDrawer(typeof(WitApplication))]
         public class VoiceCustomApplicationPropertyDrawer : VoiceApplicationDetailProvider
         {
 
         }
-        [CustomPropertyDrawer(typeof(WitIntentInfo))]
+        [CustomPropertyDrawer(typeof(WitIntent))]
         public class VoiceCustomIntentPropertyDrawer : WitIntentPropertyDrawer
         {
 
         }
-        [CustomPropertyDrawer(typeof(WitEntityInfo))]
+        [CustomPropertyDrawer(typeof(WitEntity))]
         public class VoiceCustomEntityPropertyDrawer : WitEntityPropertyDrawer
         {
 
         }
-        [CustomPropertyDrawer(typeof(WitTraitInfo))]
+        [CustomPropertyDrawer(typeof(WitTrait))]
         public class VoiceCustomTraitPropertyDrawer : WitTraitPropertyDrawer
         {
 
@@ -99,28 +100,7 @@ namespace Oculus.Voice.Utility
                 Selection.activeObject = asset;
             }
         }
-        #endregion
-
-        #region TTS
-
-        [MenuItem("Assets/Create/Voice SDK/TTS/Add Default TTS Setup", false, 0)]
-        public static void CreateDefaultTTSSetup()
-        {
-            TTSEditorUtilities.CreateDefaultSetup();
-        }
-
-        [MenuItem("Assets/Create/Voice SDK/TTS/Add TTS Service to Scene", false, 100)]
-        public static void CreateTTSService()
-        {
-            TTSEditorUtilities.CreateService();
-        }
-
-        [MenuItem("Assets/Create/Voice SDK/TTS/Add TTS Speaker to Scene", false, 100)]
-        public static void CreateTTSSpeaker()
-        {
-            TTSEditorUtilities.CreateSpeaker();
-        }
-        [MenuItem("Assets/Create/Voice SDK/TTS/Preload Settings", false, 200)]
+        [MenuItem("Assets/Create/Voice SDK/TTS Preload Settings")]
         public static void CreateTTSPreloadSettings()
         {
             TTSPreloadUtility.CreatePreloadSettings();

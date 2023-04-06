@@ -7,12 +7,9 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-using Meta.WitAi.Interfaces;
-using UnityEngine;
+using Facebook.WitAi.Interfaces;
 
-namespace Meta.WitAi.Configuration
+namespace Facebook.WitAi.Configuration
 {
     public class WitRequestOptions
     {
@@ -32,38 +29,13 @@ namespace Meta.WitAi.Configuration
         public string tag;
 
         /// <summary>
-        /// A GUID - For internal use
-        /// </summary>
-        public string requestID = Guid.NewGuid().ToString();
-
-        /// <summary>
-        /// Additional parameters to be used for custom
-        /// implementation overrides.
-        /// </summary>
-        public Dictionary<string, string> additionalParameters = new Dictionary<string, string>();
-
-        /// <summary>
         /// Callback for completion
         /// </summary>
         public Action<WitRequest> onResponse;
 
-        // Get json string
-        public string ToJsonString()
-        {
-            // Get default json
-            string results = JsonUtility.ToJson(this);
-
-            // Append parameters before final }
-            StringBuilder parameters = new StringBuilder();
-            foreach (var key in additionalParameters.Keys)
-            {
-                string value = additionalParameters[key].Replace("\"", "\\\"");
-                parameters.Append($",\"{key}\":\"{value}\"");
-            }
-            results = results.Insert(results.Length - 1, parameters.ToString());
-
-            // Return json
-            return results;
-        }
+        /// <summary>
+        /// A GUID - For internal use
+        /// </summary>
+        public string requestID = Guid.NewGuid().ToString();
     }
 }

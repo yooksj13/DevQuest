@@ -34,11 +34,6 @@ using System.Collections.Generic;
 using Assets.OVR.Scripts;
 using Assets.Oculus.VR;
 using Assets.Oculus.VR.Editor;
-using Oculus.VR.Editor;
-
-#if USING_XR_MANAGEMENT && USING_XR_SDK_OCULUS
-using Unity.XR.Oculus;
-#endif
 
 /// <summary>
 ///Scans the project and warns about the following conditions:
@@ -59,7 +54,7 @@ using Unity.XR.Oculus;
 ///Use of projectors (Mobile; can be used carefully but slow enough to warrant a warning)
 ///Maybe in the future once quantified: Graphics jobs and IL2CPP on Mobile.
 ///Real-time global illumination
-///No texture compression, or non-ASTC/ETC2 texture compression as a global setting (Mobile).
+///No texture compression, or non-ASTC texture compression as a global setting (Mobile).
 ///Using deferred rendering
 ///Excessive texture resolution after LOD bias (>2k on Mobile; >4k on Rift)
 ///Not using trilinear or aniso filtering and not generating mipmaps
@@ -386,7 +381,7 @@ public class OVRLint : EditorWindow
 		AddFix(eRecordType.StaticCommon, -9999, "Unity OpenXR Plugin Detected", "Unity OpenXR Plugin should NOT be used in production when developing Oculus apps. Please uninstall the package, and install the Oculus XR Plugin from the Package Manager.\nWhen using the Oculus XR Plugin, you can enable OpenXR backend for Oculus Plugin through the 'Oculus -> Tools -> OVR Utilities Plugin' menu.", null, null, false);
 #endif
 
-		if (!OVRPluginInfo.IsOVRPluginOpenXRActivated() || OVRPluginInfo.IsOVRPluginUnityProvidedActivated())
+		if (!OVRPluginUpdater.IsOVRPluginOpenXRActivated() || OVRPluginUpdater.IsOVRPluginUnityProvidedActivated())
 		{
 			AddFix(eRecordType.StaticCommon, -9999, "Set OVRPlugin to Oculus Utilities-provided (OpenXR backend)", "Oculus recommends using OpenXR plugin provided with its Oculus Utilities package.\nYou can enable OpenXR backend for Oculus through the 'Oculus -> Tools -> OVR Utilities Plugin' menu.", null, null, false);
 		}
@@ -751,16 +746,16 @@ public class OVRLint : EditorWindow
 			}, null, false, "Fix");
 		}
 
-		// Check that compileSDKVersion meets minimal version 26 as required for Quest's headtracking feature. Recommend 29 to match the MinSdkVersion. Set (and allow) Auto to align with Unity Setup Tool.
+		// Check that compileSDKVersion meets minimal version 26 as required for Quest's headtracking feature. Recommend 29 to match the MinSdkVersion
 		// Unity Sets compileSDKVersion in Gradle as the value used in targetSdkVersion
 		AndroidSdkVersions requiredAndroidTargetSdkVersion = AndroidSdkVersions.AndroidApiLevel29;
 		if (OVRDeviceSelector.isTargetDeviceQuestFamily &&
-		    PlayerSettings.Android.targetSdkVersion < recommendedAndroidMinSdkVersion && PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevelAuto)
+			(int)PlayerSettings.Android.targetSdkVersion != (int)requiredAndroidTargetSdkVersion)
 		{
 			AddFix(eRecordType.StaticAndroid, "Set Android Target SDK Level", "Oculus Quest apps recommend setting target API level to " +
-			                                                                  (int)requiredAndroidTargetSdkVersion, delegate (UnityEngine.Object obj, bool last, int selected)
+				(int)requiredAndroidTargetSdkVersion, delegate (UnityEngine.Object obj, bool last, int selected)
 			{
-				PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+				PlayerSettings.Android.targetSdkVersion = requiredAndroidTargetSdkVersion;
 			}, null, false, "Fix");
 		}
 
@@ -784,22 +779,13 @@ public class OVRLint : EditorWindow
 		}
 
 #if USING_XR_SDK
-		if (OVRPluginInfo.IsOVRPluginOpenXRActivated() && PlayerSettings.colorSpace != ColorSpace.Linear)
+		if (OVRPluginUpdater.IsOVRPluginOpenXRActivated() && PlayerSettings.colorSpace != ColorSpace.Linear)
 		{
 			AddFix(eRecordType.StaticAndroid, "Set Color Space to Linear", "Oculus Utilities Plugin with OpenXR only supports linear lighting.",
 				delegate (UnityEngine.Object obj, bool last, int selected)
 			{
 				PlayerSettings.colorSpace = ColorSpace.Linear;
 			}, null, false, "Fix");
-		}
-#endif
-
-#if USING_XR_MANAGEMENT && USING_XR_SDK_OCULUS && OCULUS_XR_SYMMETRIC
-		OculusSettings settings;
-		UnityEditor.EditorBuildSettings.TryGetConfigObject<OculusSettings>("Unity.XR.Oculus.Settings", out settings);
-		if (settings.SymmetricProjection)
-		{
-			AddFix(eRecordType.StaticAndroid, "Symmetric Projection Optimization", "Symmetric Projection is enabled in the Oculus XR Settings. To ensure best GPU performance, make sure at least FFR 1 is being used.", null, null, false);
 		}
 #endif
 
@@ -854,11 +840,7 @@ public class OVRLint : EditorWindow
 
 		var textures = Resources.FindObjectsOfTypeAll<Texture2D>();
 
-#if UNITY_2022_2_OR_NEWER
-		int maxTextureSize = 1024 * (1 << QualitySettings.globalTextureMipmapLimit);
-#else
 		int maxTextureSize = 1024 * (1 << QualitySettings.masterTextureLimit);
-#endif
 		maxTextureSize = maxTextureSize * maxTextureSize;
 
 		for (int i = 0; i < textures.Length; ++i)
@@ -893,11 +875,11 @@ public class OVRLint : EditorWindow
 			}, null, false, "Disable Projectors");
 		}
 
-		if (EditorUserBuildSettings.androidBuildSubtarget != MobileTextureSubtarget.ASTC && EditorUserBuildSettings.androidBuildSubtarget != MobileTextureSubtarget.ETC2)
+		if (EditorUserBuildSettings.androidBuildSubtarget != MobileTextureSubtarget.ASTC)
 		{
-			AddFix(eRecordType.StaticAndroid, "Optimize Texture Compression", "For GPU performance, please use ASTC or ETC2.", delegate (UnityEngine.Object obj, bool last, int selected)
+			AddFix(eRecordType.StaticAndroid, "Optimize Texture Compression", "For GPU performance, please use ASTC.", delegate (UnityEngine.Object obj, bool last, int selected)
 			{
-				EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ETC2;
+				EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
 			}, null, false, "Fix");
 		}
 

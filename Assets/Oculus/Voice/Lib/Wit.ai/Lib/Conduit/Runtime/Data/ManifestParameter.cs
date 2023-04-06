@@ -6,9 +6,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Meta.WitAi.Json;
 
 namespace Meta.Conduit
 {
@@ -29,7 +29,7 @@ namespace Meta.Conduit
         public string Name
         {
             get => name;
-            set => name = ConduitUtilities.DelimitWithUnderscores(value);
+            set => name = ConduitUtilities.DelimitWithUnderscores(value).ToLower();
         }
         private string name;
 
@@ -46,7 +46,6 @@ namespace Meta.Conduit
         /// <summary>
         /// This is the data type of the parameter, exposed as an entity type.
         /// </summary>
-        [JsonIgnore]
         public string EntityType
         {
             get
@@ -54,7 +53,7 @@ namespace Meta.Conduit
                 var lastPeriod = QualifiedTypeName.LastIndexOf('.');
                 if (lastPeriod < 0)
                 {
-                    return QualifiedTypeName;
+                    return string.Empty;
                 }
                 var entityName = QualifiedTypeName.Substring(lastPeriod + 1);
 
@@ -84,11 +83,6 @@ namespace Meta.Conduit
         /// Additional names by which the backend can refer to this parameter.
         /// </summary>
         public List<string> Aliases { get; set; }
-        
-        /// <summary>
-        /// Example values this parameter can accept.
-        /// </summary>
-        public List<string> Examples { get; set; }
 
         public override bool Equals(object obj)
         {

@@ -18,9 +18,12 @@
  * limitations under the License.
  */
 
-using Meta.WitAi;
-using Meta.WitAi.Windows;
+using System;
+using Facebook.WitAi;
+using Facebook.WitAi.Windows;
+using Facebook.WitAi.Utilities;
 using Oculus.Voice.Utility;
+using UnityEditor;
 using UnityEngine;
 
 namespace Oculus.Voice.Windows
@@ -35,8 +38,8 @@ namespace Oculus.Voice.Windows
         protected override void LayoutFields()
         {
             WitEditorUI.LayoutKeyLabel(VoiceSDKStyles.Texts.AboutVoiceSdkVersionLabel, VoiceSDKVersion.VERSION);
-            WitEditorUI.LayoutKeyLabel(VoiceSDKStyles.Texts.AboutWitSdkVersionLabel, WitConstants.SDK_VERSION);
-            WitEditorUI.LayoutKeyLabel(VoiceSDKStyles.Texts.AboutWitApiVersionLabel, WitConstants.API_VERSION);
+            WitEditorUI.LayoutKeyLabel(VoiceSDKStyles.Texts.AboutWitSdkVersionLabel, WitRequest.WIT_SDK_VERSION);
+            WitEditorUI.LayoutKeyLabel(VoiceSDKStyles.Texts.AboutWitApiVersionLabel, WitRequest.WIT_API_VERSION);
 
             GUILayout.Space(16);
 

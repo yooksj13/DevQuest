@@ -41,7 +41,7 @@ namespace Oculus.Interaction.Input
 
         protected virtual void Start()
         {
-            this.AssertField(Controller, nameof(Controller));
+            Assert.IsNotNull(Controller);
         }
 
         public Handedness Handedness => Controller.Handedness;
@@ -50,10 +50,10 @@ namespace Oculus.Interaction.Input
 
         public bool IsPoseValid => Controller.IsPoseValid;
 
-        public event Action WhenUpdated
+        public event Action ControllerUpdated
         {
-            add => Controller.WhenUpdated += value;
-            remove => Controller.WhenUpdated -= value;
+            add => Controller.ControllerUpdated += value;
+            remove => Controller.ControllerUpdated -= value;
         }
 
         public bool Active => IsConnected;
@@ -67,8 +67,6 @@ namespace Oculus.Interaction.Input
         {
             return Controller.TryGetPointerPose(out pose);
         }
-
-        public float Scale => Controller.Scale;
 
         public bool IsButtonUsageAnyActive(ControllerButtonUsage buttonUsage)
         {
@@ -91,7 +89,6 @@ namespace Oculus.Interaction.Input
             _controller = controller as MonoBehaviour;
             Controller = controller;
         }
-
         #endregion
     }
 }

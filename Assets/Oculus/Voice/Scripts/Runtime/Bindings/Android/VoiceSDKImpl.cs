@@ -19,10 +19,10 @@
  */
 
 using System;
-using Meta.WitAi;
-using Meta.WitAi.Configuration;
-using Meta.WitAi.Events;
-using Meta.WitAi.Interfaces;
+using Facebook.WitAi;
+using Facebook.WitAi.Configuration;
+using Facebook.WitAi.Events;
+using Facebook.WitAi.Interfaces;
 using Oculus.Voice.Core.Bindings.Android;
 using Oculus.Voice.Interfaces;
 using Debug = UnityEngine.Debug;
@@ -58,9 +58,9 @@ namespace Oculus.Voice.Bindings.Android
 
         public ITranscriptionProvider TranscriptionProvider { get; set; }
 
-        public override void Connect(string version)
+        public override void Connect()
         {
-            base.Connect(version);
+            base.Connect();
             eventBinding = new VoiceSDKListenerBinding(this, this);
             eventBinding.VoiceEvents.OnStoppedListening.AddListener(OnStoppedListening);
             service.SetListener(eventBinding);
@@ -83,10 +83,22 @@ namespace Oculus.Voice.Bindings.Android
             _isActive = false;
         }
 
+        public void Activate(string text)
+        {
+            service.Activate(text);
+        }
+
         public void Activate(string text, WitRequestOptions requestOptions)
         {
-            eventBinding.VoiceEvents.OnRequestOptionSetup?.Invoke(requestOptions);
             service.Activate(text, requestOptions);
+        }
+
+        public void Activate()
+        {
+            if (_isActive) return;
+
+            _isActive = true;
+            service.Activate();
         }
 
         public void Activate(WitRequestOptions requestOptions)
@@ -94,8 +106,15 @@ namespace Oculus.Voice.Bindings.Android
             if (_isActive) return;
 
             _isActive = true;
-            eventBinding.VoiceEvents.OnRequestOptionSetup?.Invoke(requestOptions);
             service.Activate(requestOptions);
+        }
+
+        public void ActivateImmediately()
+        {
+            if (_isActive) return;
+
+            _isActive = true;
+            service.ActivateImmediately();
         }
 
         public void ActivateImmediately(WitRequestOptions requestOptions)
@@ -103,7 +122,6 @@ namespace Oculus.Voice.Bindings.Android
             if (_isActive) return;
 
             _isActive = true;
-            eventBinding.VoiceEvents.OnRequestOptionSetup?.Invoke(requestOptions);
             service.ActivateImmediately(requestOptions);
         }
 

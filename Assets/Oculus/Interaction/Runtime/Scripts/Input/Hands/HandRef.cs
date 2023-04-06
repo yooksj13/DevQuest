@@ -20,6 +20,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction.Input
 {
@@ -48,6 +49,9 @@ namespace Oculus.Interaction.Input
 
         public bool IsTrackedDataValid => Hand.IsTrackedDataValid;
 
+        public bool IsCenterEyePoseValid => Hand.IsCenterEyePoseValid;
+
+        public Transform TrackingToWorldSpace => Hand.TrackingToWorldSpace;
         public int CurrentDataVersion => Hand.CurrentDataVersion;
 
         public event Action WhenHandUpdated
@@ -65,7 +69,7 @@ namespace Oculus.Interaction.Input
 
         protected virtual void Start()
         {
-            this.AssertField(Hand, nameof(Hand));
+            Assert.IsNotNull(Hand);
         }
 
         public bool GetFingerIsPinching(HandFinger finger)
@@ -126,6 +130,16 @@ namespace Oculus.Interaction.Input
         public bool GetRootPose(out Pose pose)
         {
             return Hand.GetRootPose(out pose);
+        }
+
+        public bool GetCenterEyePose(out Pose pose)
+        {
+            return Hand.GetCenterEyePose(out pose);
+        }
+
+        public bool GetHandAspect<TComponent>(out TComponent foundComponent) where TComponent : class
+        {
+            return Hand.GetHandAspect(out foundComponent);
         }
 
         #region Inject

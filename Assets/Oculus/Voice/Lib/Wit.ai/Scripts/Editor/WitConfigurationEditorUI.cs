@@ -7,35 +7,43 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
-using Meta.WitAi.Data.Configuration;
+using Facebook.WitAi.Configuration;
+using Facebook.WitAi.Data.Entities;
+using Facebook.WitAi.Data.Intents;
+using Facebook.WitAi.Data.Traits;
+using Facebook.WitAi.Utilities;
+using Facebook.WitAi.Data.Configuration;
 
-namespace Meta.WitAi
+namespace Facebook.WitAi
 {
     public static class WitConfigurationEditorUI
     {
         // Configuration select
-        public static void LayoutConfigurationSelect(ref int configIndex, Action onNewClick)
+        public static void LayoutConfigurationSelect(ref int configIndex)
         {
             // Refresh configurations if needed
             WitConfiguration[] witConfigs = WitConfigurationUtility.WitConfigs;
 
-            // If no configuration exists, provide a means for the user to create a new one.
             if (witConfigs == null || witConfigs.Length == 0)
             {
-                // Begin layout
+                // If no configuration exists, provide a means for the user to create a new one.
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-
-                if (WitEditorUI.LayoutTextButton(WitTexts.Texts.SettingsAddMainButtonLabel))
+                    
+                if (WitEditorUI.LayoutTextButton("New Config"))
                 {
-                    onNewClick?.Invoke();
-                }
+                    WitConfigurationUtility.CreateConfiguration("");
 
-                // End layout
+                    EditorUtility.FocusProjectWindow();
+                }
+                    
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
+                
                 return;
             }
 
@@ -48,7 +56,7 @@ namespace Meta.WitAi
             }
 
             GUILayout.BeginHorizontal();
-
+            
             // Layout popup
             WitEditorUI.LayoutPopup(WitTexts.Texts.ConfigurationSelectLabel, WitConfigurationUtility.WitConfigNames, ref configIndex, ref configUpdated);
 
@@ -57,7 +65,7 @@ namespace Meta.WitAi
                 EditorUtility.FocusProjectWindow();
                 EditorGUIUtility.PingObject(witConfigs[configIndex]);
             }
-
+            
             GUILayout.EndHorizontal();
         }
     }

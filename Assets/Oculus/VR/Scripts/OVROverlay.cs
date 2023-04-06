@@ -95,9 +95,9 @@ public class OVROverlay : MonoBehaviour
 	public bool isDynamic = false;
 
 	/// <summary>
-	/// If true, the layer would be used to present protected content (e.g. HDCP), the content won't be shown in screenshots or recordings.
+	/// If true, the layer would be used to present protected content (e.g. HDCP). The flag is effective only on PC.
 	/// </summary>
-	[Tooltip("If true, the layer would be used to present protected content (e.g. HDCP), the content won't be shown in screenshots or recordings.")]
+	[Tooltip("If true, the layer would be used to present protected content (e.g. HDCP). The flag is effective only on PC.")]
 	public bool isProtectedContent = false;
 
 	//Source and dest rects
@@ -208,7 +208,7 @@ public class OVROverlay : MonoBehaviour
 	}
 
 	[SerializeField]
-	internal bool _previewInEditor = false;
+	private bool _previewInEditor = false;
 
 #if UNITY_EDITOR
 	private GameObject previewObject;
@@ -286,7 +286,6 @@ public class OVROverlay : MonoBehaviour
 
 	private Renderer rend;
 
-
 	private int texturesPerStage { get { return (layout == OVRPlugin.LayerLayout.Stereo) ? 2 : 1; } }
 
 	private static bool NeedsTexturesForShape(OverlayShape shape)
@@ -315,7 +314,6 @@ public class OVROverlay : MonoBehaviour
 			}
 		}
 
-
 		bool needsSetup = (
 			isOverridePending ||
 			layerDesc.MipLevels != mipLevels ||
@@ -325,18 +323,13 @@ public class OVROverlay : MonoBehaviour
 			layerDesc.LayerFlags != flags ||
 			!layerDesc.TextureSize.Equals(size) ||
 			layerDesc.Shape != shape ||
-			layerCompositionDepth != compositionDepth)
-			;
+			layerCompositionDepth != compositionDepth);
 
 		if (!needsSetup)
 			return false;
 
 		OVRPlugin.LayerDesc desc = OVRPlugin.CalculateLayerDesc(shape, layout, size, mipLevels, sampleCount, etFormat, flags);
-
-
 		OVRPlugin.EnqueueSetupLayer(desc, compositionDepth, layerIdPtr);
-
-
 		layerId = (int)layerIdHandle.Target;
 
 		if (layerId > 0)
@@ -710,88 +703,104 @@ public class OVROverlay : MonoBehaviour
 			if (et == null)
 				continue;
 
-			ret = true;
-
-			// PC requries premultiplied Alpha, premultiply it unless its already premultiplied
-			bool premultiplyAlpha = !Application.isMobilePlatform && !isAlphaPremultiplied;
-
-			// OpenGL does not support copy texture between different format
-			bool isOpenGL = SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.OpenGLES2;
-			// Graphics.CopyTexture only works when textures are same size
-			bool isSameSize = et.width == textures[eyeId].width && et.height == textures[eyeId].height;
-
-			bool bypassBlit = Application.isMobilePlatform && !isOpenGL && isSameSize;
-			if (bypassBlit)
-			{
-				Graphics.CopyTexture(textures[eyeId], et);
-				continue;
-			}
-
-			// Need to run the blit shader for premultiply Alpha
 			for (int mip = 0; mip < mipLevels; ++mip)
 			{
+				bool dataIsLinear = isHdr || (QualitySettings.activeColorSpace == ColorSpace.Linear);
+
+				var rt = textures[eyeId] as RenderTexture;
+#if UNITY_ANDROID && !UNITY_EDITOR
+				dataIsLinear = true; //HACK: Graphics.CopyTexture causes linear->srgb conversion on target write with D3D but not GLES.
+#endif
+				// PC requries premultiplied Alpha
+				bool requiresPremultipliedAlpha = !Application.isMobilePlatform;
+
+				bool linearToSRGB = !isHdr && dataIsLinear;
+				// if the texture needs to be premultiplied, premultiply it unless its already premultiplied
+				bool premultiplyAlpha = requiresPremultipliedAlpha && !isAlphaPremultiplied;
+
+				bool bypassBlit = !linearToSRGB && !premultiplyAlpha && rt != null && rt.format == rtFormat;
+
 				RenderTexture tempRTDst = null;
 
-				int width = size.w >> mip;
-				if (width < 1) width = 1;
-				int height = size.h >> mip;
-				if (height < 1) height = 1;
-				RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, rtFormat, 0);
-				descriptor.msaaSamples = sampleCount;
-				descriptor.useMipMap = true;
-				descriptor.autoGenerateMips = false;
-				descriptor.sRGB = true;
-
-				tempRTDst = RenderTexture.GetTemporary(descriptor);
-
-				if (!tempRTDst.IsCreated())
+				if (!bypassBlit)
 				{
-					tempRTDst.Create();
-				}
+					int width = size.w >> mip;
+					if (width < 1) width = 1;
+					int height = size.h >> mip;
+					if (height < 1) height = 1;
+					RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, rtFormat, 0);
+					descriptor.msaaSamples = sampleCount;
+					descriptor.useMipMap = true;
+					descriptor.autoGenerateMips = false;
+					descriptor.sRGB = false;
 
-				tempRTDst.DiscardContents();
+					tempRTDst = RenderTexture.GetTemporary(descriptor);
 
-				Material blitMat = null;
-				if (currentOverlayShape != OverlayShape.Cubemap && currentOverlayShape != OverlayShape.OffcenterCubemap)
-				{
-					blitMat = tex2DMaterial;
-				}
-				else
-				{
-					blitMat = cubeMaterial;
-				}
-
-				blitMat.SetInt("_premultiply", premultiplyAlpha ? 1 : 0);
-
-				if (currentOverlayShape != OverlayShape.Cubemap && currentOverlayShape != OverlayShape.OffcenterCubemap)
-				{
-					blitMat.SetInt("_flip", OVRPlugin.nativeXrApi == OVRPlugin.XrApi.OpenXR ? 1 : 0);
-					if (overrideTextureRectMatrix)
+					if (!tempRTDst.IsCreated())
 					{
-						BlitSubImage(textures[eyeId], tempRTDst, tex2DMaterial, GetBlitRect(eyeId));
+						tempRTDst.Create();
+					}
+
+					tempRTDst.DiscardContents();
+
+					Material blitMat = null;
+					if (currentOverlayShape != OverlayShape.Cubemap && currentOverlayShape != OverlayShape.OffcenterCubemap)
+					{
+						blitMat = tex2DMaterial;
 					}
 					else
 					{
-						Graphics.Blit(textures[eyeId], tempRTDst, tex2DMaterial);
+						blitMat = cubeMaterial;
 					}
-					//Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
-					Graphics.CopyTexture(tempRTDst, 0, 0, et, 0, mip);
+
+					blitMat.SetInt("_linearToSrgb", linearToSRGB ? 1 : 0);
+					blitMat.SetInt("_premultiply", premultiplyAlpha ? 1 : 0);
+					blitMat.SetInt("_flip", OVRPlugin.nativeXrApi == OVRPlugin.XrApi.OpenXR ? 1 : 0);
+				}
+
+				if (currentOverlayShape != OverlayShape.Cubemap && currentOverlayShape != OverlayShape.OffcenterCubemap)
+				{
+					if (bypassBlit)
+					{
+						Graphics.CopyTexture(textures[eyeId], 0, mip, et, 0, mip);
+					}
+					else
+					{
+						if (overrideTextureRectMatrix)
+						{
+							BlitSubImage(textures[eyeId], tempRTDst, tex2DMaterial, GetBlitRect(eyeId));
+						}
+						else
+						{
+							Graphics.Blit(textures[eyeId], tempRTDst, tex2DMaterial);
+						}
+						//Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
+						Graphics.CopyTexture(tempRTDst, 0, 0, et, 0, mip);
+					}
 				}
 				else // Cubemap
 				{
 					for (int face = 0; face < 6; ++face)
 					{
 						cubeMaterial.SetInt("_face", face);
-						//Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
-						Graphics.Blit(textures[eyeId], tempRTDst, cubeMaterial);
-						Graphics.CopyTexture(tempRTDst, 0, 0, et, face, mip);
+						if (bypassBlit)
+						{
+							Graphics.CopyTexture(textures[eyeId], face, mip, et, face, mip);
+						}
+						else
+						{
+							//Resolve, decompress, swizzle, etc not handled by simple CopyTexture.
+							Graphics.Blit(textures[eyeId], tempRTDst, cubeMaterial);
+							Graphics.CopyTexture(tempRTDst, 0, 0, et, face, mip);
+						}
 					}
 				}
-
 				if (tempRTDst != null)
 				{
 					RenderTexture.ReleaseTemporary(tempRTDst);
 				}
+
+				ret = true;
 			}
 		}
 
@@ -812,8 +821,8 @@ public class OVROverlay : MonoBehaviour
 			layerId, frameIndex, pose.flipZ().ToPosef_Legacy(), scale.ToVector3f(), layerIndex, (OVRPlugin.OverlayShape)currentOverlayShape,
 			overrideTextureRectMatrix, textureRectMatrix, overridePerLayerColorScaleAndOffset, colorScale, colorOffset,
 			useExpensiveSuperSample, useBicubicFiltering, useEfficientSupersample, useEfficientSharpen, useExpensiveSharpen,
-			hidden, isProtectedContent
-			);
+			hidden);
+
 		prevOverlayShape = currentOverlayShape;
 
 		return isOverlayVisible;
@@ -841,13 +850,18 @@ public class OVROverlay : MonoBehaviour
 
 	public static bool IsPassthroughShape(OverlayShape shape)
 	{
-		return OVRPlugin.IsPassthroughShape((OVRPlugin.OverlayShape)shape);
+		return shape == OverlayShape.ReconstructionPassthrough
+			|| shape == OverlayShape.KeyboardHandsPassthrough
+			|| shape == OverlayShape.KeyboardMaskedHandsPassthrough
+			|| shape == OverlayShape.SurfaceProjectedPassthrough;
 	}
 
 #region Unity Messages
 
 	void Awake()
 	{
+		Debug.Log("Overlay Awake");
+
 		if (Application.isPlaying)
 		{
 			if (tex2DMaterial == null)
@@ -974,7 +988,7 @@ public class OVROverlay : MonoBehaviour
 #endif
 	}
 
-	void ComputePoseAndScale(ref OVRPose pose, ref Vector3 scale, ref bool overlay, ref bool headLocked)
+	bool ComputeSubmit(ref OVRPose pose, ref Vector3 scale, ref bool overlay, ref bool headLocked)
 	{
 		Camera headCamera = Camera.main;
 
@@ -1004,11 +1018,6 @@ public class OVROverlay : MonoBehaviour
 			}
 			pose.position = headCamera.transform.position;
 		}
-	}
-
-	bool ComputeSubmit(ref OVRPose pose, ref Vector3 scale, ref bool overlay, ref bool headLocked)
-	{
-		ComputePoseAndScale(ref pose, ref scale, ref overlay, ref headLocked);
 
 		// Pack the offsetCenter directly into pose.position for offcenterCubemap
 		if (currentOverlayShape == OverlayShape.OffcenterCubemap)

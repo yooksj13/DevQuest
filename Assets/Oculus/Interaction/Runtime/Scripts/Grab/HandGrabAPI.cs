@@ -19,9 +19,6 @@
  */
 
 using Oculus.Interaction.Input;
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -36,37 +33,24 @@ namespace Oculus.Interaction.GrabAPI
     {
         [SerializeField, Interface(typeof(IHand))]
         private MonoBehaviour _hand;
-
         public IHand Hand { get; private set; }
 
-        [SerializeField, Interface(typeof(IHmd)), Optional]
-        private MonoBehaviour _hmd;
+        private IFingerAPI _fingerPinchGrabAPI = new FingerPinchGrabAPI();
+        private IFingerAPI _fingerPalmGrabAPI = new FingerPalmGrabAPI();
 
-        public IHmd Hmd { get; private set; } = null;
-
-        private IFingerAPI _fingerPinchGrabAPI = null;
-        private IFingerAPI _fingerPalmGrabAPI = null;
-
-        private bool _started = false;
+        private bool _started;
 
         protected virtual void Awake()
         {
             Hand = _hand as IHand;
-            Hmd = _hmd as IHmd;
         }
 
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(Hand, nameof(Hand));
-            if (_fingerPinchGrabAPI == null)
-            {
-                _fingerPinchGrabAPI = new FingerPinchGrabAPI(Hmd);
-            }
-            if (_fingerPalmGrabAPI == null)
-            {
-                _fingerPalmGrabAPI = new FingerPalmGrabAPI();
-            }
+            Assert.IsNotNull(Hand);
+            Assert.IsNotNull(_fingerPinchGrabAPI);
+            Assert.IsNotNull(_fingerPalmGrabAPI);
             this.EndStart(ref _started);
         }
 
@@ -357,12 +341,6 @@ namespace Oculus.Interaction.GrabAPI
             Hand = hand;
         }
 
-        public void InjectOptionalHmd(IHmd hmd)
-        {
-            Hmd = hmd;
-            _hmd = hmd as MonoBehaviour;
-        }
-
         public void InjectOptionalFingerPinchAPI(IFingerAPI fingerPinchAPI)
         {
             _fingerPinchGrabAPI = fingerPinchAPI;
@@ -372,6 +350,7 @@ namespace Oculus.Interaction.GrabAPI
         {
             _fingerPalmGrabAPI = fingerGrabAPI;
         }
+
         #endregion
     }
 }

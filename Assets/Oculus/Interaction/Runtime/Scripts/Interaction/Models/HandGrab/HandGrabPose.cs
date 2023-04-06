@@ -18,31 +18,38 @@
  * limitations under the License.
  */
 
-using Oculus.Interaction.Grab;
-using Oculus.Interaction.Grab.GrabSurfaces;
+using Oculus.Interaction.HandGrab.SnapSurfaces;
 using Oculus.Interaction.Input;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction.HandGrab
 {
+    [System.Serializable]
+    public struct HandGrabPoseData
+    {
+        public Pose gripPose;
+        public HandPose handPose;
+        public float scale;
+    }
+
     /// <summary>
     /// The HandGrabPose defines the local point in an object to which the grip point
     /// of the hand should align. It can also contain information about the final pose
     /// of the hand for perfect alignment as well as a surface that indicates the valid
     /// positions for the point.
     /// </summary>
-    public class HandGrabPose : MonoBehaviour,
-        IRelativeToRef
+    public class HandGrabPose : MonoBehaviour
     {
         [SerializeField]
         private Transform _relativeTo;
 
-        [SerializeField, Optional, Interface(typeof(IGrabSurface))]
+        [SerializeField, Optional, Interface(typeof(ISnapSurface))]
         private MonoBehaviour _surface = null;
-        private IGrabSurface _snapSurface;
-        public IGrabSurface SnapSurface
+        private ISnapSurface _snapSurface;
+        public ISnapSurface SnapSurface
         {
-            get => _snapSurface ?? _surface as IGrabSurface;
+            get => _snapSurface ?? _surface as ISnapSurface;
             private set
             {
                 _snapSurface = value;
@@ -71,22 +78,7 @@ namespace Oculus.Interaction.HandGrab
 
         protected virtual void Start()
         {
-            this.AssertField(_relativeTo, nameof(_relativeTo));
-        }
-
-        public bool UsesHandPose()
-        {
-            return _usesHandPose;
-        }
-
-        public bool SupportsHandedness(Handedness handedness)
-        {
-            if (!_usesHandPose)
-            {
-                return true;
-            }
-
-            return HandPose.Handedness == handedness;
+            Assert.IsNotNull(_relativeTo, "The relative transform can not be null");
         }
 
         /// <summary>
@@ -101,8 +93,30 @@ namespace Oculus.Interaction.HandGrab
             this.transform.SetPose(relativeTo.GlobalPose(gripPoint));
         }
 
-        public virtual bool CalculateBestPose(Pose userPose, float handScale,
-            Handedness handedness, PoseMeasureParameters scoringModifier,
+        public HandGrabPoseData SaveData()
+        {
+            HandGrabPoseData data = new HandGrabPoseData()
+            {
+                handPose = new HandPose(_handPose),
+                scale = Scale,
+                gripPose = _relativeTo.Delta(this.transform)
+            };
+
+            return data;
+        }
+
+        public void LoadData(HandGrabPoseData data, Transform relativeTo)
+        {
+            _relativeTo = relativeTo;
+            this.transform.localScale = Vector3.one * data.scale;
+            this.transform.SetPose(_relativeTo.GlobalPose(data.gripPose));
+            if (data.handPose != null)
+            {
+                _handPose = new HandPose(data.handPose);
+            }
+        }
+
+        public virtual bool CalculateBestPose(Pose userPose, Handedness handedness, PoseMeasureParameters scoringModifier,
             ref HandGrabResult result)
         {
             result.HasHandPose = false;
@@ -127,12 +141,12 @@ namespace Oculus.Interaction.HandGrab
         /// <param name="worldPoint">The user current hand pose.</param>
         /// <param name="bestSnapPoint">The snap point hand pose within the surface (if any).</param>
         /// <returns>The adjusted best pose at the surface.</returns>
-        private GrabPoseScore CompareNearPoses(in Pose worldPoint, PoseMeasureParameters scoringModifier, ref Pose bestSnapPoint)
+        private float CompareNearPoses(in Pose worldPoint, PoseMeasureParameters scoringModifier, ref Pose bestSnapPoint)
         {
             Pose desired = worldPoint;
             Pose snap = this.transform.GetPose();
 
-            GrabPoseScore bestScore;
+            float bestScore;
             Pose bestPlace;
             if (SnapSurface != null)
             {
@@ -141,7 +155,7 @@ namespace Oculus.Interaction.HandGrab
             else
             {
                 bestPlace = snap;
-                bestScore = new GrabPoseScore(desired, snap, scoringModifier.PositionRotationWeight);
+                bestScore = PoseUtils.Similarity(desired, snap, scoringModifier);
             }
 
             _relativeTo.Delta(bestPlace, ref bestSnapPoint);
@@ -156,7 +170,7 @@ namespace Oculus.Interaction.HandGrab
             _relativeTo = relativeTo;
         }
 
-        public void InjectOptionalSurface(IGrabSurface surface)
+        public void InjectOptionalSurface(ISnapSurface surface)
         {
             _surface = surface as MonoBehaviour;
             SnapSurface = surface;

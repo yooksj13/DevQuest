@@ -6,10 +6,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 
-namespace Meta.WitAi.Windows
+namespace Facebook.WitAi.Windows
 {
     // Handles layout of very simple property drawer
     public abstract class WitSimplePropertyDrawer : PropertyDrawer

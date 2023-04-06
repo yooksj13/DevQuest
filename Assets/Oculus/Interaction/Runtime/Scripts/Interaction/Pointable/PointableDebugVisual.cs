@@ -92,8 +92,8 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(Pointable, nameof(Pointable));
-            this.AssertField(_renderer, nameof(_renderer));
+            Assert.IsNotNull(Pointable);
+            Assert.IsNotNull(_renderer);
 
             _material = _renderer.material;
             _material.color = _normalColor;

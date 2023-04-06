@@ -117,7 +117,7 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(PointableCanvas, nameof(PointableCanvas));
+            Assert.IsNotNull(PointableCanvas);
             this.EndStart(ref _started);
         }
 

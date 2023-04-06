@@ -21,6 +21,7 @@
 using Oculus.Interaction.GrabAPI;
 using Oculus.Interaction.Input;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction
 {
@@ -46,8 +47,8 @@ namespace Oculus.Interaction
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(Hand, nameof(Hand));
-            this.AssertField(_handGrabApi, nameof(_handGrabApi));
+            Assert.IsNotNull(Hand);
+            Assert.IsNotNull(_handGrabApi);
             this.EndStart(ref _started);
         }
 

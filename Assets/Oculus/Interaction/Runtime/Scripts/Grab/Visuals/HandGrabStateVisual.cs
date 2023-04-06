@@ -52,8 +52,8 @@ namespace Oculus.Interaction.HandGrab
         protected virtual void Start()
         {
             this.BeginStart(ref _started);
-            this.AssertField(HandGrabState, nameof(HandGrabState));
-            this.AssertField(_syntheticHand, nameof(_syntheticHand));
+            Assert.IsNotNull(HandGrabState);
+            Assert.IsNotNull(_syntheticHand);
             this.EndStart(ref _started);
         }
 

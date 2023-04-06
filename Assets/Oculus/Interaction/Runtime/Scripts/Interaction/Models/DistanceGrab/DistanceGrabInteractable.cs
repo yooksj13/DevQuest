@@ -20,6 +20,7 @@
 
 using Oculus.Interaction.HandGrab;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction
 {
@@ -30,11 +31,8 @@ namespace Oculus.Interaction
     /// moving it with deltas in its own place or allowing a pull motion, etc.
     /// </summary>
     public class DistanceGrabInteractable : PointerInteractable<DistanceGrabInteractor, DistanceGrabInteractable>,
-        IRigidbodyRef, IRelativeToRef, ICollidersRef
+        IRigidbodyRef, IDistanceInteractable
     {
-        [SerializeField, Interface(typeof(IPointableElement))]
-        private MonoBehaviour _pointableElement;
-
         private Collider[] _colliders;
         public Collider[] Colliders => _colliders;
 
@@ -91,13 +89,12 @@ namespace Oculus.Interaction
         {
             base.Awake();
             MovementProvider = _movementProvider as IMovementProvider;
-            PointableElement = _pointableElement as IPointableElement;
         }
 
         protected override void Start()
         {
             this.BeginStart(ref _started, () => base.Start());
-            this.AssertField(Rigidbody, nameof(Rigidbody));
+            Assert.IsNotNull(Rigidbody);
             _colliders = Rigidbody.GetComponentsInChildren<Collider>();
             if (MovementProvider == null)
             {
@@ -108,13 +105,12 @@ namespace Oculus.Interaction
             {
                 _grabSource = Rigidbody.transform;
             }
-            this.AssertField(PointableElement, nameof(PointableElement));
             this.EndStart(ref _started);
         }
 
         public IMovement GenerateMovement(in Pose to)
         {
-            Pose source = _grabSource.GetPose();
+            Pose source = RelativeTo.GetPose();
             IMovement movement = MovementProvider.CreateMovement();
             movement.StopAndSetPose(source);
             movement.MoveTo(to);
@@ -132,21 +128,14 @@ namespace Oculus.Interaction
 
         #region Inject
 
-        public void InjectAllGrabInteractable(Rigidbody rigidbody, IPointableElement pointableElement)
+        public void InjectAllGrabInteractable(Rigidbody rigidbody)
         {
             InjectRigidbody(rigidbody);
-            InjectPointableElement(pointableElement);
         }
 
         public void InjectRigidbody(Rigidbody rigidbody)
         {
             _rigidbody = rigidbody;
-        }
-
-        public void InjectPointableElement(IPointableElement pointableElement)
-        {
-            PointableElement = pointableElement;
-            _pointableElement = pointableElement as MonoBehaviour;
         }
 
         public void InjectOptionalGrabSource(Transform grabSource)

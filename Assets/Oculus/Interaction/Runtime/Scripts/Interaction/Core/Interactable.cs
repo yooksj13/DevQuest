@@ -22,7 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Oculus.Interaction.Collections;
+using UnityEngine.Assertions;
 
 namespace Oculus.Interaction
 {
@@ -36,6 +36,7 @@ namespace Oculus.Interaction
                                         where TInteractor : Interactor<TInteractor, TInteractable>
                                         where TInteractable : Interactable<TInteractor, TInteractable>
     {
+
         [SerializeField, Interface(typeof(IGameObjectFilter)), Optional]
         private List<MonoBehaviour> _interactorFilters = new List<MonoBehaviour>();
         private List<IGameObjectFilter> InteractorFilters = null;
@@ -50,10 +51,6 @@ namespace Oculus.Interaction
 
         [SerializeField]
         private int _maxSelectingInteractors = -1;
-
-        [SerializeField, Optional]
-        private UnityEngine.Object _data = null;
-        public object Data { get; protected set; } = null;
 
         #region Properties
         public int MaxInteractors
@@ -85,8 +82,8 @@ namespace Oculus.Interaction
         public IEnumerable<IInteractorView> InteractorViews => _interactors.Cast<IInteractorView>();
         public IEnumerable<IInteractorView> SelectingInteractorViews => _selectingInteractors.Cast<IInteractorView>();
 
-        private EnumerableHashSet<TInteractor> _interactors = new EnumerableHashSet<TInteractor>();
-        private EnumerableHashSet<TInteractor> _selectingInteractors = new EnumerableHashSet<TInteractor>();
+        private HashSet<TInteractor> _interactors = new HashSet<TInteractor>();
+        private HashSet<TInteractor> _selectingInteractors = new HashSet<TInteractor>();
 
         private InteractableState _state = InteractableState.Disabled;
         public event Action<InteractableStateChangeArgs> WhenStateChanged = delegate { };
@@ -116,7 +113,11 @@ namespace Oculus.Interaction
                 if (_state == value) return;
                 InteractableState previousState = _state;
                 _state = value;
-                WhenStateChanged(new InteractableStateChangeArgs(previousState,_state));
+                WhenStateChanged(new InteractableStateChangeArgs
+                {
+                    PreviousState = previousState,
+                    NewState = _state
+                });
             }
         }
 
@@ -147,9 +148,9 @@ namespace Oculus.Interaction
             _whenSelectingInteractorRemoved.Invoke(interactor);
         }
 
-        public IEnumerableHashSet<TInteractor> Interactors => _interactors;
+        public ICollection<TInteractor> Interactors => _interactors;
 
-        public IEnumerableHashSet<TInteractor> SelectingInteractors => _selectingInteractors;
+        public ICollection<TInteractor> SelectingInteractors => _selectingInteractors;
 
         public void AddInteractor(TInteractor interactor)
         {
@@ -322,17 +323,15 @@ namespace Oculus.Interaction
 
         protected virtual void Awake()
         {
-            InteractorFilters = _interactorFilters.ConvertAll(mono => mono as IGameObjectFilter);
+            InteractorFilters =
+                _interactorFilters.ConvertAll(mono => mono as IGameObjectFilter);
         }
 
         protected virtual void Start()
         {
-            this.AssertCollectionItems(InteractorFilters, nameof(InteractorFilters));
-
-            if (Data == null)
+            foreach (IGameObjectFilter filter in InteractorFilters)
             {
-                _data = this;
-                Data = _data;
+                Assert.IsNotNull(filter);
             }
         }
 
@@ -350,7 +349,7 @@ namespace Oculus.Interaction
         {
             if (registry == _registry) return;
 
-            var interactables = _registry.List();
+            IEnumerable<TInteractable> interactables = _registry.List();
             foreach (TInteractable interactable in interactables)
             {
                 registry.Register(interactable);
@@ -360,20 +359,12 @@ namespace Oculus.Interaction
         }
 
         #region Inject
-
         public void InjectOptionalInteractorFilters(List<IGameObjectFilter> interactorFilters)
         {
             InteractorFilters = interactorFilters;
             _interactorFilters = interactorFilters.ConvertAll(interactorFilter =>
                                     interactorFilter as MonoBehaviour);
         }
-
-        public void InjectOptionalData(object data)
-        {
-            _data = data as UnityEngine.Object;
-            Data = data;
-        }
-
         #endregion
     }
 }
