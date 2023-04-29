@@ -14,17 +14,17 @@ public class Fire : MonoBehaviour
 
     Vector3 ScreenCenter;
 
-    bool isFire = false;
-    bool timeron = false;
-    float time = 0;
+  //  bool isFire = false;
+   // bool timeron = false;
+   // float time = 0;
 
     // Start is called before the first frame update
     void Start()
     {
         score = 0;
-        isFire = false;
-        timeron = false;
-        time = 0;
+        //isFire = false;
+       //timeron = false;
+        //time = 0;
         ScreenCenter = new Vector3(Camera.main.pixelWidth / 2, Camera.main.pixelHeight / 2);
     }
 
@@ -45,7 +45,7 @@ public class Fire : MonoBehaviour
         Debug.Log(Dir);*/
 
         ScoreText.text = (score).ToString();
-
+/*
         if( Input.GetMouseButton (0)){
 
             
@@ -70,6 +70,6 @@ public class Fire : MonoBehaviour
 
         if(timeron==true){
             time += Time.deltaTime;
-        }
+        }*/
     }
-}
+  }
