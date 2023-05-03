@@ -29,7 +29,7 @@ public class PlayerSkills : MonoBehaviour
 
     void Update()
 	{
-		if (Input.GetKey(KeyCode.E) && (!PopUpManager.PopUpOn))
+		if (OVRInput.GetDown(OVRInput.RawButton.B) && (!PopUpManager.PopUpOn))
 		{
 			if (E_able)
 			{
@@ -44,7 +44,7 @@ public class PlayerSkills : MonoBehaviour
 				VFX_ableE = false;
 			}
 		}
-		if (Input.GetKey(KeyCode.R) && (!PopUpManager.PopUpOn))
+		if (OVRInput.GetDown(OVRInput.RawButton.X) && (!PopUpManager.PopUpOn))
         {
 			if (R_able)
 			{

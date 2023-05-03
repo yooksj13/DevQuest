@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC544\uB1E8"
+  m_text: "\uC544\uB1E8(X)"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 99b4035e46d00174185f6e129f5ef5e9, type: 2}
   m_sharedMaterial: {fileID: 7106571062543488, guid: 99b4035e46d00174185f6e129f5ef5e9,
@@ -1241,8 +1241,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 12
+  m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1930,7 +1930,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &743006428
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3119,7 +3119,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 8fc0c608a0dc4fe49aac48e10c68cfbb, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1c0b5c7580c9ae148bdca62be97e2080, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -5111,7 +5111,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: a3a4381635680ed489cc88c7bf8cf270, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 766d52425053c23418a14709b001cbef, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -5435,7 +5435,6 @@ GameObject:
   - component: {fileID: 2047535498}
   - component: {fileID: 2047535504}
   - component: {fileID: 2047535505}
-  - component: {fileID: 2047535507}
   - component: {fileID: 2047535497}
   - component: {fileID: 2047535496}
   - component: {fileID: 2047535500}
@@ -5590,7 +5589,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047535494}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a6c22f0fb0b87fd4896bb154cc57ca76, type: 3}
   m_Name: 
@@ -5614,18 +5613,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PlayerHpSlider: {fileID: 274650580}
---- !u!114 &2047535507
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2047535494}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f59502a8c619f147bb8bc9f552f3f1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2047535508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5701,7 +5688,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC608"
+  m_text: "\uC608(Y)"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 99b4035e46d00174185f6e129f5ef5e9, type: 2}
   m_sharedMaterial: {fileID: 7106571062543488, guid: 99b4035e46d00174185f6e129f5ef5e9,
@@ -5729,8 +5716,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 12
+  m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
