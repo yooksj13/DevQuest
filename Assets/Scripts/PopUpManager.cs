@@ -23,8 +23,28 @@ public class PopUpManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
-    }
+        if (OVRInput.GetDown(OVRInput.Button.Four))
+        {
+            if (!PopUpOn)
+            {
+                OnClickExit();
+            }
+            else
+            {
+                Application.Quit();
+            }
+        }
+
+        if (OVRInput.GetDown(OVRInput.Button.Three))
+        {
+            if(PopUpOn)
+            {
+                PopUpOn = false;
+                popUp.SetActive(false);
+
+            }
+        }
+    } 
 
     public void OnClickExit()
     {

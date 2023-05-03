@@ -17,7 +17,7 @@ public class VrGunFire : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (OVRInput.GetDown(OVRInput.RawButton.A) /*&& (!PopUpManager.PopUpOn)*/)
+        if (/*grab.isGrabbed &&*/ OVRInput.GetDown(OVRInput.RawButton.A) /*&& (!PopUpManager.PopUpOn)*/)
         {
             Vector3 shooting = this.transform.right;
             GameObject weapon = Instantiate(bulletPrefab) as GameObject;
